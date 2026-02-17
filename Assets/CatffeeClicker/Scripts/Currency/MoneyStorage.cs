@@ -2,7 +2,7 @@ using R3;
 using System;
 using Zenject;
 
-public sealed class MoneyStorage : IDataPersistence
+public sealed class MoneyStorage : IDataPersistence, IDisposable
 {
     private ReactiveProperty<long> _money = new(0);
     private ReactiveProperty<int> _moneyPerClick = new(0);
@@ -99,5 +99,12 @@ public sealed class MoneyStorage : IDataPersistence
         data.Money = _money.Value;
         data.MoneyPerClick = _moneyPerClick.Value;
         data.MoneyPerSecond = _moneyPerSecond.Value;
+    }
+
+    public void Dispose()
+    {
+        _money.Dispose();
+        _moneyPerClick.Dispose();
+        _moneyPerSecond.Dispose();
     }
 }

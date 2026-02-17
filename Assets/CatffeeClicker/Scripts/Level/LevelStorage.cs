@@ -1,20 +1,21 @@
+using R3;
 using System;
 using Zenject;
 
-public class LevelStorage : IDataPersistence
+public class LevelStorage : IDataPersistence, IDisposable
 {
+    private SaveConfig _saveConfig;
+
     private int _maxLevel;
     private int[] _experienceForLevel;
 
-    public int CurrentLevel { get; private set; }
-    public int CurrentExperienceLevel { get; private set; }
-    public int ExperiencePerClick { get; private set; }
+    private ReactiveProperty<int> _currentLevel = new(0);
+    private ReactiveProperty<int> _currentExperienceLevel = new(0);
+    private ReactiveProperty<int> _experiencePerClick = new(0);
 
-    public event Action<int> OnLevelChanged;
-    public event Action<int> OnExperienceChanged;
-    public event Action<int> OnExperiencePerClickChanged;
-
-    private SaveConfig _saveConfig;
+    public ReadOnlyReactiveProperty<int> CurrentLevel => _currentLevel;
+    public ReadOnlyReactiveProperty<int> CurrentExperienceLevel => _currentExperienceLevel;
+    public ReadOnlyReactiveProperty<int> ExperiencePerClick => _experiencePerClick;
 
     [Inject]
     private void Constructor(SaveConfig saveConfig) 
@@ -28,8 +29,7 @@ public class LevelStorage : IDataPersistence
             throw new ArgumentOutOfRangeException(nameof(newValue), 
                 "Experience per click cannot be negative");
 
-        ExperiencePerClick = newValue;
-        OnExperiencePerClickChanged?.Invoke(newValue);
+        _experiencePerClick.Value = newValue;
     }
 
     public void AddExperience(int experience)
@@ -38,58 +38,56 @@ public class LevelStorage : IDataPersistence
             throw new ArgumentOutOfRangeException(nameof(experience),
                 "Cannot add a negative amount of experience");
 
-        CurrentExperienceLevel += experience;
-
-        OnExperienceChanged?.Invoke(CurrentExperienceLevel);
+        _currentExperienceLevel.Value += experience;
 
         CheckForLevelUp();
     }
 
     public void AddExperiencePerClick()
     {
-        AddExperience(ExperiencePerClick);
+        AddExperience(_experiencePerClick.Value);
     }
 
     public void LevelUp()
     {
-        if (CurrentLevel < _maxLevel)
+        if (_currentLevel.Value < _maxLevel)
         {
-            CurrentLevel++;
-            OnLevelChanged?.Invoke(CurrentLevel);
+            _currentLevel.Value++;
         }
     }
 
     private void CheckForLevelUp()
     {
-        while (CurrentLevel < _maxLevel &&
-               CurrentLevel + 1 <= _experienceForLevel.Length &&
-               CurrentExperienceLevel >= _experienceForLevel[CurrentLevel])
+        while (_currentLevel.Value < _maxLevel &&
+               _currentLevel.Value + 1 <= _experienceForLevel.Length &&
+               _currentExperienceLevel.Value >= _experienceForLevel[_currentLevel.Value])
         {
-            CurrentExperienceLevel -= _experienceForLevel[CurrentLevel];
-            CurrentLevel++;
-            OnLevelChanged?.Invoke(CurrentLevel);
-            OnExperienceChanged?.Invoke(CurrentExperienceLevel);
+            _currentExperienceLevel.Value -= _experienceForLevel[_currentLevel.Value];
+            _currentLevel.Value++;
         }
     }
 
     public void LoadData(GameData data)
     {
-        CurrentLevel = data.Level;
-        CurrentExperienceLevel = data.ExperienceLevel;
-        ExperiencePerClick = data.ExperiencePerClick;
+        _currentLevel.Value = data.Level;
+        _currentExperienceLevel.Value = data.ExperienceLevel;
+        _experiencePerClick.Value = data.ExperiencePerClick;
 
         _experienceForLevel = _saveConfig.ExperienceForLevel;
         _maxLevel = _saveConfig.MaxLevel;
-
-        OnLevelChanged?.Invoke(CurrentLevel);
-        OnExperienceChanged?.Invoke(CurrentExperienceLevel);
-        OnExperiencePerClickChanged?.Invoke(ExperiencePerClick);
     }
 
     public void SaveData(ref GameData data)
     {
-        data.Level = CurrentLevel;
-        data.ExperienceLevel = CurrentExperienceLevel;
-        data.ExperiencePerClick = ExperiencePerClick;
+        data.Level = _currentLevel.Value;
+        data.ExperienceLevel = _currentExperienceLevel.Value;
+        data.ExperiencePerClick = _experiencePerClick.Value;
+    }
+
+    public void Dispose()
+    {
+        _currentLevel.Dispose();
+        _currentExperienceLevel.Dispose();
+        _experiencePerClick.Dispose();
     }
 }

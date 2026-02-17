@@ -6,6 +6,8 @@ public class LevelViewModel : IInitializable, IDisposable
 {
     private LevelStorage _levelStorage;
 
+    private CompositeDisposable _disposables = new();
+
     public readonly ReactiveProperty<string> Level = new();
     public readonly ReactiveProperty<string> Experience = new();
     public readonly ReactiveProperty<string> ExperiencePerClick = new();
@@ -17,41 +19,37 @@ public class LevelViewModel : IInitializable, IDisposable
 
     public void Initialize()
     {
-        OnLevelChanged(_levelStorage.CurrentLevel);
-        OnExperienceChanged(_levelStorage.CurrentExperienceLevel);
-        OnExperiencePerClickChanged(_levelStorage.ExperiencePerClick);
-
-        _levelStorage.OnLevelChanged += OnLevelChanged;
-        _levelStorage.OnExperienceChanged += OnExperienceChanged;
-        _levelStorage.OnExperiencePerClickChanged += OnExperiencePerClickChanged;
+        _levelStorage.CurrentLevel.Subscribe(LevelChanged).AddTo(_disposables);
+        _levelStorage.CurrentExperienceLevel.Subscribe(ExperienceChanged).AddTo(_disposables);
+        _levelStorage.ExperiencePerClick.Subscribe(ExperiencePerClickChanged).AddTo(_disposables);
     }
 
-    public void AddExperience() 
-    {
-        _levelStorage.AddExperiencePerClick();
-    }
-
-    private void OnExperienceChanged(int experience)
-    {
-        Experience.Value = experience.ToString();
-    }
-
-    private void OnExperiencePerClickChanged(int experience)
-    {
-        ExperiencePerClick.Value = experience.ToString();
-    }
-
-    private void OnLevelChanged(int level) 
+    private void LevelChanged(int level)
     {
         Level.Value = level.ToString();
     }
 
+    public void AddExperience()
+    {
+        _levelStorage.AddExperiencePerClick();
+    }
+
+    private void ExperienceChanged(int experience)
+    {
+        Experience.Value = experience.ToString();
+    }
+
+    private void ExperiencePerClickChanged(int experience)
+    {
+        ExperiencePerClick.Value = experience.ToString();
+    }
+
     public void Dispose()
     {
-        _levelStorage.OnLevelChanged -= OnLevelChanged;
-        _levelStorage.OnExperienceChanged -= OnExperienceChanged;
+        _disposables.Dispose();
 
         Level.Dispose();
         Experience.Dispose();
+        ExperiencePerClick.Dispose();
     }
 }

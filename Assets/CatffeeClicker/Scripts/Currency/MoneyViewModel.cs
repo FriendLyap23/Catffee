@@ -16,11 +16,7 @@ public sealed class MoneyViewModel : IInitializable, IDisposable
 
     public void Initialize()
     {
-        _moneyStorage.Money.Subscribe(newMoneyValue =>
-            {
-                Money.Value = CurrencyFormatter.Format(newMoneyValue);
-            })
-            .AddTo(_disposables);
+        _moneyStorage.Money.Subscribe(MoneyFormatter).AddTo(_disposables);
     }
      
     public void AddMoneyPerClick()
