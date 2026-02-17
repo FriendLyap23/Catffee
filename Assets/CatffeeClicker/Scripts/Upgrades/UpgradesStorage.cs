@@ -48,7 +48,15 @@ public class UpgradesStorage
 
     public void RecalculationCurrentPrice()
     {
-        long newPrice = CurrentPrice * ((long)PriceMultiplier);
+        double calculatedPrice = (double)CurrentPrice * PriceMultiplier;
+
+        long newPrice = (long)Math.Round(calculatedPrice);
+
+        if (newPrice <= CurrentPrice)
+        {
+            newPrice = CurrentPrice + 1;
+        }
+
         PriceChanged(newPrice);
     }
 

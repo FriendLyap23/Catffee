@@ -27,6 +27,7 @@ public class UpgradeViewModel : IInitializable, IDisposable
         PriceChanged(_upgradesStorage.CurrentPrice);
 
         _upgradesStorage.OnPriceUpgradeChanged += PriceChanged;
+        _upgradesStorage.OnPriceUpgradeChanged += FormatterPrice;
     }
 
     private void PriceChanged(long newPrice) 
@@ -34,8 +35,14 @@ public class UpgradeViewModel : IInitializable, IDisposable
         Price.Value = newPrice.ToString();
     }
 
+    private void FormatterPrice(long price) 
+    {
+        Price.Value = CurrencyFormatter.Format(price);
+    }
+
     public void Dispose()
     {
         _upgradesStorage.OnPriceUpgradeChanged -= PriceChanged;
+        _upgradesStorage.OnPriceUpgradeChanged -= FormatterPrice;
     }
 }

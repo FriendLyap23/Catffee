@@ -6,7 +6,7 @@ using UnityEngine;
 public class MoneyButtonAnimations : MonoBehaviour
 {
     private MoneyClickButton _moneyClickButton;
-    private IDisposable;
+    private IDisposable _disposable;
 
     private Tween _tapAnimation;
     private Tween _idleAnimation;

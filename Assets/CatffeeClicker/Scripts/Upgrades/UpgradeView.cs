@@ -39,6 +39,7 @@ public class UpgradeView : MonoBehaviour
 
         _upgradesViewModel = _viewModelFactory.Create(_upgradeName, _description, 
             _currentPrice, _priceMultiplier,_value, _type, _icon);
+
         _upgradesViewModel.Initialize();
     }
 
