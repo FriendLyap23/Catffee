@@ -4,7 +4,7 @@ using UnityEngine;
 public class SaveConfig : ScriptableObject
 {
     public int MaxLevel;
-    public long MaxMoney = 1000000000;
+    public long MaxMoney = 10000000000000000;
 
     public int[] ExperienceForLevel;
 }

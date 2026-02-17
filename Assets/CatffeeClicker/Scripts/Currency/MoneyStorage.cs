@@ -1,20 +1,18 @@
+using R3;
 using System;
 using Zenject;
 
 public sealed class MoneyStorage : IDataPersistence
 {
-    public long Money { get; private set; }
-    public int MoneyPerClick { get; private set; }
-    public int MoneyPerSecond { get; private set; }
+    private ReactiveProperty<long> _money = new(0);
+    private ReactiveProperty<int> _moneyPerClick = new(0);
+    private ReactiveProperty<int> _moneyPerSecond = new(0);
 
-    public long MaxMoney { get; private set; }
+    public ReadOnlyReactiveProperty<long> Money => _money;
+    public ReadOnlyReactiveProperty<int> MoneyPerClick => _moneyPerClick;
+    public ReadOnlyReactiveProperty<int> MoneyPerSecond => _moneyPerSecond;
 
-    public event Action<long> OnMoneyChanged;
-    public event Action<int> OnMoneyPerClickChanged;
-    public event Action<int> OnMoneyPerSecondChanged;
-
-    public bool CanAddMoney(long amount) => Money + amount <= MaxMoney;
-    public bool CanSpendMoney(long amount) => Money >= amount;
+    private long MaxMoney;
 
     private SaveConfig _saveConfig;
 
@@ -24,6 +22,9 @@ public sealed class MoneyStorage : IDataPersistence
         _saveConfig = saveConfig;
     }
 
+    public bool CanAddMoney(long amount) => _money.Value + amount <= MaxMoney;
+    public bool CanSpendMoney(long amount) => _money.Value >= amount;
+
     public void AddMoney(int amount)
     {
         if (amount < 0)
@@ -32,18 +33,15 @@ public sealed class MoneyStorage : IDataPersistence
 
         if (!CanAddMoney(amount))
         {
-            long possibleAmount = MaxMoney - Money;
+            long possibleAmount = MaxMoney - _money.Value;
 
             if (possibleAmount > 0)
-            {
-                Money += possibleAmount;
-                OnMoneyChanged?.Invoke(Money);
-            }
+                _money.Value += possibleAmount;
+
             return;
         }
 
-        Money += amount;
-        OnMoneyChanged?.Invoke(Money);
+        _money.Value += amount;   
     }
 
     public void SpendMoney(long amount)
@@ -55,18 +53,17 @@ public sealed class MoneyStorage : IDataPersistence
         if (!CanSpendMoney(amount))
             return;
 
-        Money -= amount;
-        OnMoneyChanged?.Invoke(Money);
+        _money.Value -= amount;
     }
 
     public void AddMoneyPerClick()
     {
-        AddMoney(MoneyPerClick);
+        AddMoney(_moneyPerClick.Value);
     }
 
     public void AddMoneyPerSecond()
     {
-        AddMoney(MoneyPerSecond);
+        AddMoney(_moneyPerSecond.Value);
     }
 
     public void SetNewValueMoneyPerSecond(int addedAmount)
@@ -76,8 +73,7 @@ public sealed class MoneyStorage : IDataPersistence
                 "Money per second cannot be negative");
 
    
-        MoneyPerSecond += addedAmount;
-        OnMoneyPerSecondChanged?.Invoke(MoneyPerSecond);
+        _moneyPerSecond.Value += addedAmount;
     }
 
     public void SetNewValueMoneyPerClick(int addedAmount)
@@ -86,28 +82,22 @@ public sealed class MoneyStorage : IDataPersistence
             throw new ArgumentOutOfRangeException(nameof(addedAmount),
                 "Money per click cannot be negative");
 
-        MoneyPerClick += addedAmount;
-        OnMoneyPerClickChanged?.Invoke(MoneyPerClick);
-
+        _moneyPerClick.Value += addedAmount;
     }
 
     public void LoadData(GameData data)
     {
-        Money = data.Money;
-        MoneyPerClick = data.MoneyPerClick;
-        MoneyPerSecond = data.MoneyPerSecond;
+        _money.Value = data.Money;
+        _moneyPerClick.Value = data.MoneyPerClick;
+        _moneyPerSecond.Value = data.MoneyPerSecond;
 
         MaxMoney = _saveConfig.MaxMoney; 
-
-        OnMoneyChanged?.Invoke(Money);
-        OnMoneyPerClickChanged?.Invoke(MoneyPerClick);
-        OnMoneyPerSecondChanged?.Invoke(MoneyPerSecond);
     }
 
     public void SaveData(ref GameData data)
     {
-        data.Money = Money;
-        data.MoneyPerClick = MoneyPerClick;
-        data.MoneyPerSecond = MoneyPerSecond;
+        data.Money = _money.Value;
+        data.MoneyPerClick = _moneyPerClick.Value;
+        data.MoneyPerSecond = _moneyPerSecond.Value;
     }
 }

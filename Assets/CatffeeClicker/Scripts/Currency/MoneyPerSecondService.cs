@@ -19,7 +19,7 @@ public class MoneyPerSecondService : MonoBehaviour
         if (_timer >= 1f)
         {
             _timer = 0f;
-            if (_moneyStorage.MoneyPerSecond > 0)
+            if (_moneyStorage.MoneyPerSecond.CurrentValue > 0)
                 _moneyStorage.AddMoneyPerSecond();
         }
     }

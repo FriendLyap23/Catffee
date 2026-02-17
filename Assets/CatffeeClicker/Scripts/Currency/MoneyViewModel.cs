@@ -7,18 +7,20 @@ public sealed class MoneyViewModel : IInitializable, IDisposable
     private readonly MoneyStorage _moneyStorage;
     private readonly CompositeDisposable _disposables = new();
 
-    public ReactiveProperty<string> Money { get; }
+    public ReactiveProperty<string> Money { get; } = new();
 
     public MoneyViewModel(MoneyStorage moneyStorage)
     {
         _moneyStorage = moneyStorage;
-        Money = new ReactiveProperty<string>();
     }
 
     public void Initialize()
     {
-        MoneyFormatter(_moneyStorage.Money);
-        _moneyStorage.OnMoneyChanged += MoneyFormatter;
+        _moneyStorage.Money.Subscribe(newMoneyValue =>
+            {
+                Money.Value = CurrencyFormatter.Format(newMoneyValue);
+            })
+            .AddTo(_disposables);
     }
      
     public void AddMoneyPerClick()
@@ -33,6 +35,6 @@ public sealed class MoneyViewModel : IInitializable, IDisposable
 
     public void Dispose()
     {
-        _moneyStorage.OnMoneyChanged -= MoneyFormatter;
+        _disposables.Dispose();
     }
 }
