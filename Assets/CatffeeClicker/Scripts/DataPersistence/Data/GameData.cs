@@ -8,7 +8,7 @@ public class GameData
     public int MoneyPerSecond = 0;
 
     public int Level = 0;
-    public int ExperienceLevel = 0;
+    public float ExperienceLevel = 0;
     public int ExperiencePerClick = 1;
 
     public List<UpgradeSaveData> UpgradesSaveData = new List<UpgradeSaveData>();

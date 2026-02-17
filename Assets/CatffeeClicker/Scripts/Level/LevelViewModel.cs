@@ -9,7 +9,7 @@ public class LevelViewModel : IInitializable, IDisposable
     private CompositeDisposable _disposables = new();
 
     public readonly ReactiveProperty<string> Level = new();
-    public readonly ReactiveProperty<string> Experience = new();
+    public readonly ReactiveProperty<float> Experience = new();
     public readonly ReactiveProperty<string> ExperiencePerClick = new();
 
     public LevelViewModel(LevelStorage levelStorage)
@@ -20,23 +20,29 @@ public class LevelViewModel : IInitializable, IDisposable
     public void Initialize()
     {
         _levelStorage.CurrentLevel.Subscribe(LevelChanged).AddTo(_disposables);
-        _levelStorage.CurrentExperienceLevel.Subscribe(ExperienceChanged).AddTo(_disposables);
         _levelStorage.ExperiencePerClick.Subscribe(ExperiencePerClickChanged).AddTo(_disposables);
+
+        Observable.CombineLatest(
+            _levelStorage.CurrentLevel,
+            _levelStorage.CurrentExperienceLevel,
+                (level, experience) =>
+                    {
+                        float requiredExperience = _levelStorage.GetExpForCurrentLevel();
+
+                        return experience / requiredExperience;
+                    }
+                ).Subscribe(progress => Experience.Value = progress)
+                .AddTo(_disposables);
     }
 
     private void LevelChanged(int level)
     {
         Level.Value = level.ToString();
     }
-
+    
     public void AddExperience()
     {
         _levelStorage.AddExperiencePerClick();
-    }
-
-    private void ExperienceChanged(int experience)
-    {
-        Experience.Value = experience.ToString();
     }
 
     private void ExperiencePerClickChanged(int experience)

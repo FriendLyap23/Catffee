@@ -10,17 +10,23 @@ public class LevelStorage : IDataPersistence, IDisposable
     private int[] _experienceForLevel;
 
     private ReactiveProperty<int> _currentLevel = new(0);
-    private ReactiveProperty<int> _currentExperienceLevel = new(0);
+    private ReactiveProperty<float> _currentExperienceLevel = new(0);
     private ReactiveProperty<int> _experiencePerClick = new(0);
 
     public ReadOnlyReactiveProperty<int> CurrentLevel => _currentLevel;
-    public ReadOnlyReactiveProperty<int> CurrentExperienceLevel => _currentExperienceLevel;
+    public ReadOnlyReactiveProperty<float> CurrentExperienceLevel => _currentExperienceLevel;
     public ReadOnlyReactiveProperty<int> ExperiencePerClick => _experiencePerClick;
 
     [Inject]
     private void Constructor(SaveConfig saveConfig) 
     {
         _saveConfig = saveConfig;
+    }
+
+    public float GetExpForCurrentLevel() 
+    {
+        float exp = _experienceForLevel[_currentLevel.Value];
+        return exp;
     }
 
     public void ChangeExperiencePerClick(int newValue) 
@@ -32,7 +38,7 @@ public class LevelStorage : IDataPersistence, IDisposable
         _experiencePerClick.Value = newValue;
     }
 
-    public void AddExperience(int experience)
+    public void AddExperience(float experience)
     {
         if (experience < 0)
             throw new ArgumentOutOfRangeException(nameof(experience),
